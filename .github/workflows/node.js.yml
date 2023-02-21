@@ -28,3 +28,8 @@ jobs:
       - run: npm install
       - run: npx ganache > /dev/null &
       - run: npm test
+      - uses: actions/checkout@master
+      - uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true 
+          verbose: true 
