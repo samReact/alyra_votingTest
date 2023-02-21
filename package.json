@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "truffle test"
+    "test": "npx truffle test"
   },
   "keywords": [],
   "author": "",
