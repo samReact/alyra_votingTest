@@ -52,7 +52,7 @@ contract("Voting", (accounts) => {
       let receipt = await this.voting.addVoter(_voter1, {
         from: _owner,
       });
-      expectEvent(receipt, "VoterRegisered", { voterAddress: _voter1 });
+      expectEvent(receipt, "VoterRegistered", { voterAddress: _voter1 });
     });
   });
 });
