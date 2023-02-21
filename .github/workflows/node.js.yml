@@ -29,6 +29,3 @@ jobs:
       - run: npx ganache > /dev/null &
       - run: npm test
       - uses: actions/checkout@master
-      - uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage1.xml,./coverage2.xml
