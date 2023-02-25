@@ -10,10 +10,12 @@ contract("Voting", (accounts) => {
 
   let votingInstance;
   let txAdd1;
+  let txAdd2;
   let txStartProp;
   let txEndProp;
   let txAddProp;
   let txStartVoting;
+  let txSetVote;
 
   before(async function () {
     votingInstance = await Voting.deployed({ from: _owner });
@@ -21,6 +23,9 @@ contract("Voting", (accounts) => {
   describe("step 0", () => {
     before(async function () {
       txAdd1 = await votingInstance.addVoter(_voter1, {
+        from: _owner,
+      });
+      txAdd2 = await votingInstance.addVoter(_voter2, {
         from: _owner,
       });
     });
@@ -114,6 +119,12 @@ contract("Voting", (accounts) => {
         });
         expect(proposal[0]).to.be.equal("smic 5000 euros");
       });
+      it("added proposal voteCount should be 0", async function () {
+        const proposal = await votingInstance.getOneProposal.call(1, {
+          from: _voter1,
+        });
+        expect(proposal.voteCount).to.be.bignumber.equal(BN(0));
+      });
       it("Should emit an event ProposalRegistered", async () => {
         expectEvent(txAddProp, "ProposalRegistered", { proposalId: BN(1) });
       });
@@ -176,6 +187,82 @@ contract("Voting", (accounts) => {
       });
     });
 
-    describe("set a vote", () => {});
+    describe("set a vote", () => {
+      before(async function () {
+        txSetVote = await votingInstance.setVote(1, {
+          from: _voter1,
+        });
+      });
+      it("Should revert if non registered voter call", async () => {
+        const tx = votingInstance.setVote(1, {
+          from: _voter3,
+        });
+        await expectRevert(tx, "You're not a voter");
+      });
+      it("Should have a status VotingSessionStarted", async function () {
+        const workflowStatus = await votingInstance.workflowStatus.call();
+        expect(workflowStatus).to.be.bignumber.equal(new BN(3));
+      });
+      it("Should revert if voter has already voted", async () => {
+        let setVote = votingInstance.setVote(1, {
+          from: _voter1,
+        });
+        await expectRevert(setVote, "You have already voted");
+      });
+      it("Should revert if voter has already voted", async () => {
+        let setVote = votingInstance.setVote(4, {
+          from: _voter2,
+        });
+        await expectRevert(setVote, "Proposal not found");
+      });
+      it("Should set votedProposal id", async function () {
+        const voter1 = await votingInstance.getVoter.call(_voter1, {
+          from: _voter1,
+        });
+        expect(voter1.votedProposalId).to.be.bignumber.equal(BN(1));
+      });
+      it("Should set votedProposal id", async function () {
+        const voter1 = await votingInstance.getVoter.call(_voter1, {
+          from: _voter1,
+        });
+        expect(voter1.hasVoted).to.be.true;
+      });
+      it("Should increment proposal voteCount", async function () {
+        const proposal = await votingInstance.getOneProposal.call(1, {
+          from: _voter1,
+        });
+        expect(proposal.voteCount).to.be.bignumber.equal(BN(1));
+      });
+      it("Should emit an event Voted", async () => {
+        expectEvent(txSetVote, "Voted", {
+          voter: _voter1,
+          proposalId: BN(1),
+        });
+      });
+    });
+
+    describe("end voting session", () => {
+      before(async function () {
+        txEndProp = await votingInstance.endVotingSession({
+          from: _owner,
+        });
+      });
+      it("Should revert if non owner call", async () => {
+        const tx = votingInstance.endVotingSession({
+          from: _voter1,
+        });
+        await expectRevert(tx, "Ownable: caller is not the owner");
+      });
+      it("Should emit an event WorkflowStatusChange", async () => {
+        expectEvent(txEndProp, "WorkflowStatusChange", {
+          previousStatus: BN(3),
+          newStatus: BN(4),
+        });
+      });
+    });
+  });
+
+  describe("step 4", () => {
+    it("Should revert if call step 3", async () => {});
   });
 });
