@@ -16,6 +16,7 @@ contract("Voting", (accounts) => {
   let txAddProp;
   let txStartVoting;
   let txSetVote;
+  let txTally;
 
   before(async function () {
     votingInstance = await Voting.deployed({ from: _owner });
@@ -262,7 +263,38 @@ contract("Voting", (accounts) => {
     });
   });
 
-  describe("step 4", () => {
-    it("Should revert if call step 3", async () => {});
+  describe("step 3", () => {
+    before(async function () {
+      txTally = await votingInstance.tallyVotes({
+        from: _owner,
+      });
+    });
+    it("Should revert if call step 2", async () => {
+      const txSetVote = votingInstance.setVote(1, {
+        from: _voter1,
+      });
+
+      await expectRevert(txSetVote, "Voting session havent started yet");
+    });
+    describe("tallyVotes", () => {
+      it("Should revert if non owner call", async () => {
+        const tx = votingInstance.tallyVotes({
+          from: _voter1,
+        });
+        await expectRevert(tx, "Ownable: caller is not the owner");
+      });
+      it("WinningProposalID should be equal to 1 ", async () => {
+        const tx = await votingInstance.winningProposalID.call({
+          from: _owner,
+        });
+        expect(tx).to.be.bignumber.equal(BN(1));
+      });
+      it("Should emit an event WorkflowStatusChange", async () => {
+        expectEvent(txTally, "WorkflowStatusChange", {
+          previousStatus: BN(4),
+          newStatus: BN(5),
+        });
+      });
+    });
   });
 });
