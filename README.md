@@ -45,7 +45,9 @@ On every push or pull request on the main branch tests are launch.
 
 ### Tests
 
-```
+```bash
+#  execute the tests
+
 $ truffle test
 ```
 
@@ -103,10 +105,31 @@ For testing the Voting.sol contract,we have follow theses steps:
 
 ```
 
-To keep the contract storage state between steps we use a deployed instance of the contract instead of a new :
+To keep the contract storage state between steps we use a deployed instance of the contract instead of a new instance:
 
 ```js
 before(async function () {
   votingInstance = await Voting.deployed({ from: _owner });
 });
 ```
+
+On every steps we execute the necessary actions to test the step, for instance on step 0 we add 2 voters before tests :
+
+```js
+before(async function () {
+  txAdd1 = await votingInstance.addVoter(_voter1, {
+    from: _owner,
+  });
+  txAdd2 = await votingInstance.addVoter(_voter2, {
+    from: _owner,
+  });
+});
+```
+
+These 2 added voters will be kept through all steps.
+
+For each function we will test :
+
+- If caller has right to call (owner,voters)
+- Has the correct status
+- Do the expected behavior (add voters, add proposals, set a vote, emit events and finally set a winning proposal Id)
